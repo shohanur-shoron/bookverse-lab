@@ -5,9 +5,10 @@ from django.conf.urls.static import static
 from users import views as users_views
 
 urlpatterns = [
-    path('', users_views.mainHomePage, name='mainHomePage'),
+    path('', include("mainpages.urls")),
     path('admin/', admin.site.urls),
     path('account/', include("users.urls")),
+    path('books/', include("book.urls")),
 ]
 
 urlpatterns = urlpatterns + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
