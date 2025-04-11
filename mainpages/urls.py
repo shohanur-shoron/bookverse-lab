@@ -11,4 +11,5 @@ urlpatterns = [
     path('events/', views.events, name='events'),
     path('search-suggestions', views.search_items, name='search_items'),
     path('category/<int:id>', views.specific_category, name='specific_category'),
+    path('reviewer/progile/<int:id>', views.reviewer_profile, name='reviewer_profile'),
 ]

@@ -9,6 +9,7 @@ urlpatterns = [
     path('favorites', views.favorites_books, name="favorites_books"),
     path('getAuthors/', views.get_authors, name='get_authors'),
     path('getCategory/', views.get_category, name='get_category'),
+    path('view/<int:pk>', views.book_detail_view, name='book_detail_view'),
 
 
 ]

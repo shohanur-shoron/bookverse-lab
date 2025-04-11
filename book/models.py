@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 from django.urls import reverse
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
@@ -45,7 +46,6 @@ class Book(models.Model):
     favorites_chapters = models.CharField(max_length=50, null=True, blank=True)
     favorites_quotes = models.TextField(blank=True, null=True)
     series = models.CharField(max_length=100, blank=True, null=True)
-    reading_level = models.CharField(max_length=50, blank=True, null=True)
     best_character = models.CharField(max_length=100, blank=True, null=True)
     awards = models.TextField(blank=True, null=True)
     format = models.CharField(
@@ -100,3 +100,20 @@ class MyEvent(models.Model):
 
     def __str__(self):
         return f"{self.user} {self.event.name} "
+
+
+class Comment(models.Model):
+    book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
+    text = models.TextField()
+    rating = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'Comment by {self.user.username} on {self.book.title}'

@@ -123,7 +123,7 @@
                 <div class="book-grid">
                     {% for fav in favorite_books %}
                         <div class="book-card-small">
-                            <a href="{% url 'book_detail' fav.book.id %}"> {% comment %} Adjust URL name and pk/slug {% endcomment %}
+                            <a href="{% url 'book_detail_view' fav.book.id %}">
                                 {% if fav.book.image %}
                                 <img src="{{ fav.book.image.url }}" alt="{{ fav.book.name }}" class="book-cover">
                                 {% else %}

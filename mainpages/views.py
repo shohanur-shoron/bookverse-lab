@@ -125,3 +125,41 @@ def search_items(request):
 
     # Return the data as JSON
     return JsonResponse(data, safe=False)
+
+
+def reviewer_profile(request, id):
+
+    profile_user = User.objects.get(id=id)
+
+    try:
+        profile = Profile.objects.prefetch_related('interests').get(user=profile_user)
+    except Profile.DoesNotExist:
+
+        profile = None
+
+    favorite_books = Favorite.objects.filter(user=profile_user)\
+                                     .select_related('book')\
+                                     .order_by('-timestamp')[:10]
+
+    reading_statuses = ReadingStatus.objects.filter(user=profile_user)\
+                                            .select_related('book')\
+                                            .order_by('-last_updated')
+
+    books_to_read = reading_statuses.filter(status='to_read')[:10]
+    books_reading = reading_statuses.filter(status='reading')[:10]
+    books_completed = reading_statuses.filter(status='completed')[:10]
+
+
+    followed_authors = Author.objects.filter(followers=profile_user)[:10]
+
+    context = {
+        'profile_user': profile_user, # The User object whose profile is being viewed
+        'profile': profile,           # The associated Profile object (or None)
+        'favorite_books': favorite_books, # QuerySet of Favorite objects
+        'books_to_read': books_to_read,   # QuerySet of ReadingStatus objects
+        'books_reading': books_reading, # QuerySet of ReadingStatus objects
+        'books_completed': books_completed,# QuerySet of ReadingStatus objects
+        'followed_authors': followed_authors, # QuerySet of Author objects
+    }
+
+    return render(request, 'homePage/userProfile.html', context)

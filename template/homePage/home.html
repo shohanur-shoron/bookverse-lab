@@ -31,7 +31,7 @@
                     </div>
                 </div>
             </div>
-            <a href="#" class="bookname">
+            <a href="{% url 'book_detail_view' book.id %}" class="bookname">
                 <p class="booknameText">{{ book.name }}</p>
             </a>
             <a href="#" class="auther">

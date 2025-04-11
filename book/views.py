@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import CreateView, UpdateView
 from django.http import JsonResponse
 from django.urls import reverse_lazy
-from .models import Author, Book, Category, Favorite
+from .models import Author, Book, Category, Favorite, Comment
 from .forms import AuthorForm, CategoryForm
 from django.contrib import messages
 from .models import Author, Category
@@ -50,6 +50,7 @@ def create_book(request):
                 category=category,
                 price=request.POST.get('price'),
                 authors=author,
+                publisher=request.user,
                 rating=request.POST.get('rating'),
                 suggestions=request.POST.get('suggestions'),
                 link=request.POST.get('link'),
@@ -124,3 +125,29 @@ def get_authors(request):
 def get_category(request):
     category_names = list(Category.objects.values_list('name', flat=True))
     return JsonResponse(category_names, safe=False)
+
+
+def book_detail_view(request, pk):
+    book = get_object_or_404(Book, pk=pk)
+    comments = Comment.objects.filter(book=book)
+
+    book.total_views += 1
+    book.save(update_fields=['total_views'])
+    total_comments = comments.count()
+    total_ratting = 0
+    for comment in comments:
+        total_ratting += comment.rating
+
+    if total_ratting != 0:
+        avg = total_ratting/total_comments
+    else:
+        avg = 0
+
+
+    context = {
+        'book': book,
+        'comments': comments,
+        'average': f'{avg:.2f}' if avg != 0 else '0',
+    }
+
+    return render(request, 'homePage/card-detailed-view.html', context)
