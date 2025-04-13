@@ -1,6 +1,6 @@
 from django.urls import path, include
 
-from . import views
+from . import views, views2
 
 urlpatterns = [
     path('', views.mainHomePage, name='mainHomePage'),
@@ -14,4 +14,10 @@ urlpatterns = [
     path('reviewer/progile/<int:id>', views.reviewer_profile, name='reviewer_profile'),
     path('favourites/', views.favoriteBooksPage, name='favoriteBooksPage'),
     path('discover/', views.discoverBooksPage, name='discoverBooksPage'),
+    path('your-comments/', views2.your_comments, name='your_comments'),
+    path('your-favourites/', views2.your_favorites, name='your_favorites'),
+    path('recently-seen/', views2.recently_seen, name='recently_seen'),
+    path('liked/', views2.liked_books, name='liked_books'),
+    path('currently-reading/', views2.currently_reading_books, name='currently_reading_books'),
+    path('api/update-progress/', views2.update_reading_progress_api, name='update_reading_progress_api'),
 ]

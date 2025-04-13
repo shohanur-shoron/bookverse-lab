@@ -50,23 +50,23 @@
                 <img src="{% static 'images/icons8-books-64.png' %}" alt="">
                 <p>Your Books</p>
             </a>
-            <a href="#" class="genericStyle flex">
+            <a href="{% url 'your_favorites' %}" class="genericStyle flex">
                 <img src="{% static 'images/icons8-favourite-64.png' %}" alt="">
                 <p>Your Favourite</p>
             </a>
-            <a href="#" class="genericStyle flex">
+            <a href="{% url 'liked_books' %}" class="genericStyle flex">
                 <img src="{% static 'images/icons8-like-32.png' %}" alt="">
                 <p>Your Likes</p>
             </a>
-            <a href="#" class="genericStyle flex">
+            <a href="{% url 'your_comments' %}" class="genericStyle flex">
                 <img src="{% static 'images/icons8-comments-64.png' %}" alt="">
                 <p>Your Comments</p>
             </a>
-            <a href="#" class="genericStyle flex">
+            <a href="{% url 'recently_seen' %}" class="genericStyle flex">
                 <img src="{% static 'images/icons8-time-machine-32.png' %}" alt="">
                 <p>Recently seen</p>
             </a>
-            <a href="#" class="genericStyle flex">
+            <a href="{% url 'currently_reading_books' %}" class="genericStyle flex">
                 <img src="{% static 'images/icons8-status-64.png' %}" alt="">
                 <p>Reading Status</p>
             </a>

@@ -9,6 +9,7 @@ from .forms import AuthorForm, CategoryForm
 from django.contrib import messages
 from .models import Author, Category
 from django.http import JsonResponse
+from mainpages.views2 import add_recently_viewed
 
 
 def check_author(name):
@@ -132,6 +133,7 @@ def get_category(request):
 def book_detail_view(request, pk):
     global favorite_books, reading_list
     book = get_object_or_404(Book, pk=pk)
+    add_recently_viewed(request.user, book)
     comments = Comment.objects.filter(book=book)
     if request.user.is_authenticated:
         favorite_books = Book.objects.filter(favorite__user=request.user)

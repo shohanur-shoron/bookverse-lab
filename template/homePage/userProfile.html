@@ -148,7 +148,7 @@
              {% comment %} Could use tabs here, or just sections {% endcomment %}
 
              <div class="reading-list">
-                <h3 class="sub-section-title">Currently Reading</h3>
+                <h3 class="sub-section-title">Currently Reading <a style="text-decoration: none; color: #2b68ea;" href="#">(edit)</a></h3>
                 {% if books_reading %}
                     <div class="book-grid">
                         {% for status in books_reading %}
@@ -173,7 +173,7 @@
              </div>
 
              <div class="reading-list">
-                <h3 class="sub-section-title">Want to Read</h3>
+                <h3 class="sub-section-title">Want to Read <a style="text-decoration: none; color: #2b68ea;" href="#">(edit)</a></h3>
                  {% if books_to_read %}
                     <div class="book-grid">
                          {% for status in books_to_read %}
@@ -195,7 +195,7 @@
             </div>
 
              <div class="reading-list">
-                <h3 class="sub-section-title">Completed</h3>
+                <h3 class="sub-section-title">Completed <a style="text-decoration: none; color: #2b68ea;" href="#">(edit)</a></h3>
                  {% if books_completed %}
                     <div class="book-grid">
                          {% for status in books_completed %}
@@ -223,7 +223,7 @@
                 <div class="author-list">
                     {% for author in followed_authors %}
                         <div class="author-card-small">
-                             <a href="{% url 'author_detail' author.id %}"> {% comment %} Adjust URL name and pk/slug {% endcomment %}
+                             <a href="{% url 'author_detail' author.id %}">
                                 {% if author.image %}
                                     <img src="{{ author.image.url }}" alt="{{ author.name }}" class="author-image">
                                 {% else %}
