@@ -20,4 +20,5 @@ urlpatterns = [
     path('liked/', views2.liked_books, name='liked_books'),
     path('currently-reading/', views2.currently_reading_books, name='currently_reading_books'),
     path('api/update-progress/', views2.update_reading_progress_api, name='update_reading_progress_api'),
+    path('read-in-future/', views2.want_to_read_books, name='want_to_read_books'),
 ]

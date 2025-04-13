@@ -117,3 +117,15 @@
 .comment-card__rating .far { /* Empty */
      color: #d0d0d0; /* Light gray */
 }
+
+.movetoCurrent{
+    margin-top: 5px;
+    border-radius: 20px;
+    background-color: #157347;
+    color: #fff;
+    padding: 3px;
+    font-size: 0.8rem;
+    font-weight: 400;
+    text-decoration: none;
+    text-align: center;
+}

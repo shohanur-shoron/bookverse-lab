@@ -39,7 +39,6 @@ def get_user_comments_details(request):
     return comments_data
 
 def add_recently_viewed(user, book):
-    """Adds or updates a book in the user's recently viewed list and trims old entries."""
     if not user.is_authenticated:
         return
 
@@ -238,3 +237,13 @@ def search_books_sqlite_fuzzy(query):
     sorted_results = sorted(results_with_scores, key=lambda item: item['score'], reverse=True)
     final_book_list = [item['book'] for item in sorted_results]
     return final_book_list
+
+
+def want_to_read_books(request):
+    books = get_to_read_books(request)
+
+    context = {
+        'books': books,
+        'title_text': 'Future Read Books',
+    }
+    return render(request, 'sidePanel/future_read.html', context)
