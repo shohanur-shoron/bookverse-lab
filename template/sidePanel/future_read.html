@@ -58,7 +58,7 @@
                     {% endfor %}
                  {% endwith %}
             </div>
-            <a href="#" class="movetoCurrent">Move to Currently Reading</a>
+            <a href="{% url 'move_to_Currently_Reading_Books' book.id %}" class="movetoCurrent">Move to Currently Reading</a>
           </div>
         </div>
       {% endfor %}

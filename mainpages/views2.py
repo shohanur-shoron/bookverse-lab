@@ -1,7 +1,7 @@
 import json
 
 from django.http import JsonResponse
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 
 from book.models import *
@@ -247,3 +247,13 @@ def want_to_read_books(request):
         'title_text': 'Future Read Books',
     }
     return render(request, 'sidePanel/future_read.html', context)
+
+
+def move_to_Currently_Reading_Books(request, id):
+    book = get_object_or_404(Book, pk=id)
+    reading_status = ReadingStatus.objects.get(user=request.user, book=book)
+
+    reading_status.status = 'reading'
+    reading_status.save()
+
+    return redirect('want_to_read_books')
