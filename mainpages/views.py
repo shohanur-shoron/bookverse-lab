@@ -4,6 +4,7 @@ from book.models import *
 from users.models import *
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.models import User
+from .views2 import search_books_sqlite_fuzzy
 
 
 def get_interested_books(request):
@@ -59,7 +60,12 @@ def get_not_interested_books(request):
         return Book.objects.all()
 
 def mainHomePage(request):
-    books = get_interested_books(request)
+    global books
+    if request.method == 'POST':
+        search_text = request.POST['searchText']
+        books = search_books_sqlite_fuzzy(search_text)
+    else:
+        books = get_interested_books(request)
     favorite_books = []
     if request.user.is_authenticated:
         favorite_books = Book.objects.filter(favorite__user=request.user)

@@ -130,13 +130,10 @@ def liked_books(request):
     user_liked_books = Book.objects.filter(
         likes=request.user
     ).order_by('-published_time')
-
-
     context = {
         'books': user_liked_books,
         'title_text': 'Your Liked Books',
     }
-
     return render(request, 'sidePanel/your-favourite.html', context)
 
 
@@ -209,62 +206,35 @@ def update_reading_progress_api(request):
     except ReadingStatus.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Reading status not found or not \'reading\'.'}, status=404)
     except Exception as e:
-        # Consider logging the exception e
         return JsonResponse({'status': 'error', 'message': 'An unexpected error occurred.'}, status=500)
 
 
 def search_books_sqlite_fuzzy(query):
-
     if not query or not query.strip():
         return []
 
     query = query.strip()
-
     initial_lookups = (
         Q(name__icontains=query) |
         Q(authors__name__icontains=query) |
-        Q(description__icontains=query) | # Optional: can be slow/noisy
+        Q(description__icontains=query) |
         Q(category__name__icontains=query) |
         Q(series__icontains=query)
-        # Add other simple text fields if desired, but keep it limited for performance
+
     )
     candidate_books = Book.objects.filter(initial_lookups).distinct().select_related('authors', 'category')
-    # Using distinct() because JOINs (authors, category) can create duplicates
-    # Using select_related to pre-fetch related objects for efficiency in the loop
 
-    # 2. Fuzzy Matching and Scoring
     results_with_scores = []
     for book in candidate_books:
-        # Calculate similarity scores against key fields
-        # token_set_ratio is good for matching phrases even if word order differs or words are missing
         name_score = fuzz.token_set_ratio(query, book.name)
-
         author_name = book.authors.name if book.authors else ""
         author_score = fuzz.token_set_ratio(query, author_name)
 
-        # Optional: Add more scores if needed, e.g., description
-        # Be mindful of performance with long text fields
-        # description_score = fuzz.partial_ratio(query, book.description[:500]) # Use partial_ratio and limit length
-
-        # Determine the highest score for this book from the relevant fields
-        # Prioritize matches in Name and Author
         highest_score = max(name_score, author_score * 1.1) # Slightly boost author score relevance if desired
-        # Add other scores to max() if calculated
 
-        # Only include results above the threshold
         if highest_score >= SIMILARITY_THRESHOLD:
             results_with_scores.append({'book': book, 'score': highest_score})
 
-    # 3. Sort Results by Score
-    # Sort the list of dictionaries by 'score' in descending order
     sorted_results = sorted(results_with_scores, key=lambda item: item['score'], reverse=True)
-
-    # 4. Extract final list of Book objects
     final_book_list = [item['book'] for item in sorted_results]
-
-    # --- Optional Refinement: Add exact matches if missed by fuzzy ---
-    # Sometimes fuzzy matching might miss a perfect (but maybe short) match
-    # included by the initial ORM query. You could add them back if needed,
-    # but usually, the sorted list is sufficient.
-
     return final_book_list
