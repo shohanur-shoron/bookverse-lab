@@ -12,4 +12,6 @@ urlpatterns = [
     path('search-suggestions', views.search_items, name='search_items'),
     path('category/<int:id>', views.specific_category, name='specific_category'),
     path('reviewer/progile/<int:id>', views.reviewer_profile, name='reviewer_profile'),
+    path('favourites/', views.favoriteBooksPage, name='favoriteBooksPage'),
+    path('discover/', views.discoverBooksPage, name='discoverBooksPage'),
 ]

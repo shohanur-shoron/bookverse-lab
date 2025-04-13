@@ -121,55 +121,50 @@ function handleCommentSubmission() {
     const bookIdInput = document.getElementById('bookId');
     const ratingValueInput = document.getElementById('commentRatingValue');
     const userProfileImage = document.getElementById('userProfileImage');
-    const ratingError = document.getElementById('ratingError'); // Optional error display
+    const ratingError = document.getElementById('ratingError');
 
     if (!commentForm || !commentsList || !bookIdInput || !ratingValueInput) {
         console.warn("Comment form, list, book ID, or rating input not found.");
         return;
     }
-
-    const userProfileSrc = userProfileImage ? userProfileImage.src : 'images/default-avatar.png'; // Provide a fallback
+    const userProfileSrc = userProfileImage ? userProfileImage.src : '{% static "images/default-avatar.png" %}'; // Use static tag result if needed
 
     commentForm.addEventListener('submit', function(event) {
         event.preventDefault();
-
         const commentText = document.getElementById('commentText').value.trim();
         const commentRating = ratingValueInput.value;
         const bookId = bookIdInput.value;
 
-        // Validation
-        if (!commentText || commentRating === "0") {
-            if (commentRating === "0" && ratingError) {
-                ratingError.style.display = 'block'; // Show rating error
-            } else {
-                 alert('Please provide a comment.');
-            }
-            if (!commentText){
-                 alert('Please provide a comment.');
-            }
+        if (!commentText || commentRating === "0") { /* ... Keep validation ... */
+            if (commentRating === "0" && ratingError) ratingError.style.display = 'block';
+            if (!commentText) alert('Please provide a comment.');
             return;
         }
-
         const ratingValue = parseInt(commentRating, 10);
 
         // --- 1. Local Update ---
+        // *** Find and remove the 'no comments' message if it exists ***
+        const noCommentsMsg = document.getElementById('noCommentsMessage');
+        if (noCommentsMsg) {
+            noCommentsMsg.remove();
+        }
+
+        // (Create new comment element - Keep previous logic)
         const newCommentElement = document.createElement('div');
         newCommentElement.classList.add('comment');
-        // (Avatar creation...)
-        const commentAvatar = document.createElement('div');
+        const commentAvatar = document.createElement('div'); /* ... avatar creation ... */
         commentAvatar.classList.add('commentAvatar');
         const avatarImg = document.createElement('img');
         avatarImg.src = userProfileSrc;
         avatarImg.alt = "User Avatar";
         commentAvatar.appendChild(avatarImg);
-        // (Content creation...)
-        const commentContent = document.createElement('div');
+        const commentContent = document.createElement('div'); /* ... content creation ... */
         commentContent.classList.add('commentContent');
         const commentHeader = document.createElement('div');
         commentHeader.classList.add('commentHeader');
         const authorStrong = document.createElement('strong');
         authorStrong.classList.add('commentAuthor');
-        authorStrong.textContent = 'You'; // Replace if user info available
+        authorStrong.textContent = 'You';
         const ratingSpan = document.createElement('span');
         ratingSpan.classList.add('commentRating');
         ratingSpan.innerHTML = generateStars(ratingValue);
@@ -184,43 +179,40 @@ function handleCommentSubmission() {
         commentBodyP.textContent = commentText;
         commentContent.appendChild(commentHeader);
         commentContent.appendChild(commentBodyP);
-        // (Append to comment element)
         newCommentElement.appendChild(commentAvatar);
         newCommentElement.appendChild(commentContent);
         // (Add to list)
         commentsList.insertBefore(newCommentElement, commentsList.firstChild);
 
-        // --- 2. Send to Backend ---
+        // --- 2. Send to Backend (Keep previous logic) ---
         const commentData = { book_id: bookId, comment_text: commentText, rating: ratingValue };
         const csrfToken = getCsrfToken();
-        const backendUrl = '/add_comment/'; // *** YOUR BACKEND URL HERE ***
+        const backendUrl = 'http://127.0.0.1:8000/books/comment/'; // *** YOUR URL ***
 
-        fetch(backendUrl, {
+        fetch(backendUrl, { /* ... Keep fetch options ... */
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
             body: JSON.stringify(commentData)
-        })
-        .then(response => {
+         })
+        .then(response => { /* ... Keep response handling ... */
             if (!response.ok) return response.json().then(err => { throw new Error(err.message || 'Failed to post comment'); });
             return response.json();
-        })
-        .then(data => {
-            console.log('Comment Success:', data);
+         })
+        .then(data => { /* ... Keep success handling ... */
+             console.log('Comment Success:', data);
             if (data.status === 'success') {
-                commentForm.reset(); // Clear form
-                ratingValueInput.value = "0"; // Reset hidden rating
-                document.querySelectorAll('#starRatingContainer .star').forEach(s => s.classList.remove('selected')); // Reset stars
-                if(ratingError) ratingError.style.display = 'none'; // Hide error
-            } else {
-                throw new Error(data.message || 'Backend reported an issue.');
-            }
-        })
-        .catch(error => {
-            console.error('Error posting comment:', error);
+                commentForm.reset();
+                ratingValueInput.value = "0";
+                document.querySelectorAll('#starRatingContainer .star').forEach(s => s.classList.remove('selected'));
+                if(ratingError) ratingError.style.display = 'none';
+            } else { throw new Error(data.message || 'Backend error.'); }
+         })
+        .catch(error => { /* ... Keep error handling ... */
+             console.error('Error posting comment:', error);
             alert(`Error: ${error.message}`);
-            // Optional: Remove local comment on failure
+            // Optionally remove local comment on failure
             // commentsList.removeChild(newCommentElement);
-        });
+         });
     });
 }
 
@@ -251,7 +243,7 @@ function handleLikeButton() {
         // 2. Send request to backend
         const likeData = { book_id: bookId };
         const csrfToken = getCsrfToken();
-        const backendUrl = '/like_book/'; // *** YOUR BACKEND URL HERE ***
+        const backendUrl = 'http://127.0.0.1:8000/books/like/'; // *** YOUR BACKEND URL HERE ***
 
         fetch(backendUrl, {
             method: 'POST',
@@ -316,7 +308,7 @@ function handleFavouriteButton() {
         // --- Send request to backend ---
         const favoData = { book_id: bookId };
         const csrfToken = getCsrfToken();
-        const backendUrl = '/toggle_favourite/'; // *** YOUR BACKEND URL HERE ***
+        const backendUrl = 'http://127.0.0.1:8000/books/addToFav/'; // *** YOUR BACKEND URL HERE ***
 
         fetch(backendUrl, {
             method: 'POST',
@@ -376,6 +368,96 @@ function updateFavouriteButtonUI(buttonElement, textElement, iconElement, isFavo
 }
 
 
+function handleReadingListButton() {
+    const readingListBtn = document.querySelector('.addToReadingListBtn');
+    const bookIdInput = document.getElementById('bookId');
+
+    if (!readingListBtn || !bookIdInput) {
+        console.warn("Reading List button or book ID input not found.");
+        return;
+    }
+
+    // Get references to inner elements for UI update
+    const listIcon = readingListBtn.querySelector('i');
+    const listText = readingListBtn.querySelector('p');
+
+    readingListBtn.addEventListener('click', function() {
+        const bookId = bookIdInput.value;
+
+        // Prevent multiple rapid clicks (optional)
+        if (readingListBtn.classList.contains('processing')) {
+            return;
+        }
+        readingListBtn.classList.add('processing');
+        readingListBtn.style.opacity = '0.7';
+
+        // Send request to backend
+        const listData = { book_id: bookId };
+        const csrfToken = getCsrfToken();
+        const backendUrl = 'http://127.0.0.1:8000/books/add_to_reading_list/'; // *** YOUR NEW BACKEND URL HERE ***
+
+        fetch(backendUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify(listData)
+        })
+        .then(response => {
+             readingListBtn.classList.remove('processing'); // Re-enable clicks
+             readingListBtn.style.opacity = '1';
+
+            if (!response.ok) {
+                 return response.json().then(err => { throw new Error(err.message || 'Failed to add to list'); });
+            }
+            return response.json(); // Expecting { status: 'success', reading_status: 'to_read' } or similar
+        })
+        .then(data => {
+            console.log('Add to List Success:', data);
+            if (data.status === 'success') {
+                // Update UI to show it's added
+                updateReadingListButtonUI(readingListBtn, listText, listIcon, true); // Assume true means 'added'
+            } else {
+                throw new Error(data.message || 'Backend reported add to list issue.');
+            }
+        })
+        .catch(error => {
+            console.error('Error adding to reading list:', error);
+            alert(`Error adding to list: ${error.message}`);
+             readingListBtn.classList.remove('processing'); // Re-enable clicks on error
+             readingListBtn.style.opacity = '1';
+        });
+    });
+}
+
+function updateReadingListButtonUI(buttonElement, textElement, iconElement, isAdded) {
+    // Define states
+    const addedText = "On List";
+    const addedBgColor = "#3498db"; // Example: Blue for added to list
+    const addedIconClass = "bx bx-list-check"; // Example: Check icon
+
+    const defaultText = "Add to List";
+    const defaultBgColor = ""; // Let CSS handle default color
+    const defaultIconClass = "bx bx-list-plus"; // Original plus icon
+
+    if (isAdded) {
+        if (textElement) textElement.textContent = addedText;
+        buttonElement.style.backgroundColor = addedBgColor; // Change color
+        if (iconElement) iconElement.className = addedIconClass; // Change icon
+        buttonElement.classList.add('is-on-list'); // Add class for CSS/JS state checking
+        // Optional: Disable button after adding?
+        // buttonElement.disabled = true;
+        // buttonElement.style.cursor = 'default';
+    } else {
+        // This function might not need an 'else' if the button only adds
+        // But if it toggled, you'd reset here:
+        if (textElement) textElement.textContent = defaultText;
+        buttonElement.style.backgroundColor = defaultBgColor;
+        if (iconElement) iconElement.className = defaultIconClass;
+        buttonElement.classList.remove('is-on-list');
+        // buttonElement.disabled = false;
+        // buttonElement.style.cursor = 'pointer';
+    }
+}
+
 // --- Initialize all functions when DOM is ready ---
 document.addEventListener('DOMContentLoaded', () => {
     truncateDescription();
@@ -383,4 +465,5 @@ document.addEventListener('DOMContentLoaded', () => {
     handleCommentSubmission();
     handleLikeButton(); // Initialize Like button listener
     handleFavouriteButton(); // Initialize Favourite button listener
+    handleReadingListButton();
 });

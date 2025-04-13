@@ -153,7 +153,7 @@
                     <div class="book-grid">
                         {% for status in books_reading %}
                         <div class="book-card-small">
-                            <a href="{% url 'book_detail' status.book.id %}">
+                            <a href="{% url 'book_detail_view' status.book.id %}">
                                 {% if status.book.image %}
                                 <img src="{{ status.book.image.url }}" alt="{{ status.book.name }}" class="book-cover">
                                 {% else %}
@@ -178,7 +178,7 @@
                     <div class="book-grid">
                          {% for status in books_to_read %}
                         <div class="book-card-small">
-                            <a href="{% url 'book_detail' status.book.id %}">
+                            <a href="{% url 'book_detail_view' status.book.id %}">
                                 {% if status.book.image %}
                                 <img src="{{ status.book.image.url }}" alt="{{ status.book.name }}" class="book-cover">
                                 {% else %}
@@ -200,7 +200,7 @@
                     <div class="book-grid">
                          {% for status in books_completed %}
                         <div class="book-card-small">
-                            <a href="{% url 'book_detail' status.book.id %}">
+                            <a href="{% url 'book_detail_view' status.book.id %}">
                                 {% if status.book.image %}
                                 <img src="{{ status.book.image.url }}" alt="{{ status.book.name }}" class="book-cover">
                                 {% else %}

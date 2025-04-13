@@ -116,4 +116,18 @@ class Comment(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f'Comment by {self.user.username} on {self.book.title}'
+        return f'Comment by {self.user.username} on {self.book.name}'
+
+
+class RecentlyViewedBook(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recently_viewed')
+    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now=True) # auto_now updates time on every save
+
+    class Meta:
+        ordering = ['-timestamp'] # Show newest first by default
+        # Ensure a user doesn't have the same book listed multiple times
+        unique_together = ('user', 'book')
+
+    def __str__(self):
+        return f"{self.user.username} viewed {self.book.name} at {self.timestamp}"

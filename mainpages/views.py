@@ -5,14 +5,92 @@ from users.models import *
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.models import User
 
-def mainHomePage(request):
-    books = Book.objects.all()
 
+def get_interested_books(request):
+    """
+    Returns a QuerySet of books whose category matches the interests
+    of the logged-in user associated with the request.
+    Returns an empty QuerySet if the user is not authenticated,
+    has no profile, or has no interests selected.
+    """
+    if not request.user.is_authenticated:
+        return Book.objects.none()
+
+    try:
+        profile = request.user.profile
+        interested_categories = profile.interests.all()
+
+        if not interested_categories.exists():
+            return Book.objects.none() # No interests selected
+
+        # Filter books where the book's category is in the user's interested categories
+        return Book.objects.filter(category__in=interested_categories).distinct()
+
+    except (Profile.DoesNotExist, AttributeError):
+        # Profile doesn't exist for the user, or reverse relation isn't 'profile'
+        return Book.objects.none()
+
+
+def get_not_interested_books(request):
+    """
+    Returns a QuerySet of books whose category does NOT match the interests
+    of the logged-in user associated with the request.
+    Returns all books if the user is not authenticated, has no profile,
+    or has no specific interests selected (as no categories can be excluded).
+    """
+    if not request.user.is_authenticated:
+        return Book.objects.all() # Anonymous user isn't interested/not-interested based on profile
+
+    try:
+        profile = request.user.profile
+        interested_categories = profile.interests.all()
+
+        if not interested_categories.exists():
+            # If the user has no specific interests, we can't exclude anything based on them.
+            # Therefore, all books are potentially "not interested" based on profile data.
+            return Book.objects.all()
+
+        # Exclude books where the book's category is in the user's interested categories
+        return Book.objects.exclude(category__in=interested_categories).distinct()
+
+    except (Profile.DoesNotExist, AttributeError):
+        # Profile doesn't exist, so we can't determine specific interests to exclude.
+        # Return all books.
+        return Book.objects.all()
+
+def mainHomePage(request):
+    books = get_interested_books(request)
+    favorite_books = []
+    if request.user.is_authenticated:
+        favorite_books = Book.objects.filter(favorite__user=request.user)
     contex = {
-        'books': books
+        'books': books,
+        'favorite_books': favorite_books if request.user.is_authenticated else None,
     }
     return render(request, 'homePage/home.html', contex)
 
+
+def favoriteBooksPage(request):
+    favorite_books = []
+    if request.user.is_authenticated:
+        favorite_books = Book.objects.filter(favorite__user=request.user)
+    contex = {
+        'books': favorite_books if request.user.is_authenticated else None,
+        'favorite_books': favorite_books if request.user.is_authenticated else None,
+    }
+    return render(request, 'homePage/home.html', contex)
+
+
+def discoverBooksPage(request):
+    books = get_not_interested_books(request)
+    favorite_books = []
+    if request.user.is_authenticated:
+        favorite_books = Book.objects.filter(favorite__user=request.user)
+    contex = {
+        'books': books,
+        'favorite_books': favorite_books if request.user.is_authenticated else None,
+    }
+    return render(request, 'homePage/home.html', contex)
 
 def specific_category(request, id):
     # Get the category object to pass to the template

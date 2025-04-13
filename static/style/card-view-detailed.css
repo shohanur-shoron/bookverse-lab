@@ -654,6 +654,6 @@ img {
     .submitCommentBtn { min-width: 180px; padding: 12px 30px; font-size: 1rem;}
 }
 
-/* =========================================== */
-/* === END OF FILE: style/cardDetails.css === */
-/* =========================================== */
+.is-on-list{
+    background-color: #3498db !important;
+}

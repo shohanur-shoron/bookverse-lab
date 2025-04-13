@@ -160,6 +160,10 @@
                 <div class="inforowlabel">Avg. Rating</div>
                 <div class="inforowdata" >{{ average }}</div>
             </div>
+            <div class="inforow">
+                <div class="inforowlabel">Reviewer Rating</div>
+                <div class="inforowdata" >{{ book.rating }}</div>
+            </div>
 
             <!-- Action Buttons -->
             <div class="allButtons">
@@ -171,7 +175,7 @@
                     </div>
 
 
-                    {% if user in book.likes.all %}
+                    {% if book in favorite_books %}
                         <div class="addToFavoBtn is-favourited" style="background-color: #e74c3c;">
                             <i class='bx bxs-heart-circle'></i>
                             <p>Favourited</p>
@@ -182,11 +186,17 @@
                             <p>Favourite</p>
                         </div>
                     {% endif %}
-
-                    <div class= "addToReadingListBtn">
-                        <i class='bx bx-list-plus'></i>
-                        <p>Add to List</p>
-                    </div>
+                    {%  if book in reading_list %}
+                        <div class= "addToReadingListBtn is-on-list">
+                            <i class='bx bx-list-check'></i>
+                            <p>On List</p>
+                        </div>
+                    {% else %}
+                        <div class= "addToReadingListBtn">
+                            <i class='bx bx-list-plus'></i>
+                            <p>Add to List</p>
+                        </div>
+                    {% endif %}
                 {% else %}
                      <div class="likeBtn" title="Login to like">
                         <i class='bx bxs-like'></i><p>{{ book.likes.count }}</p>
@@ -250,7 +260,7 @@
             </form>
         {% else %}
             <p style="text-align: center; margin-bottom: 30px;">
-                Please <a href="{% url 'login' %}?next={{ request.path }}"><strong>login</strong></a> or <a href="{% url 'register' %}?next={{ request.path }}"><strong>register</strong></a> to leave a comment or review.
+                Please <a href="{% url 'login_user' %}"><strong>login</strong></a> or <a href="{% url 'create_account' %}"><strong>register</strong></a> to leave a comment or review.
             </p>
         {% endif %}
 

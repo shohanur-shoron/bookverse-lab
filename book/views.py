@@ -1,8 +1,10 @@
+import json
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import CreateView, UpdateView
 from django.http import JsonResponse
 from django.urls import reverse_lazy
-from .models import Author, Book, Category, Favorite, Comment
+from .models import Author, Book, Category, Favorite, Comment, ReadingStatus
 from .forms import AuthorForm, CategoryForm
 from django.contrib import messages
 from .models import Author, Category
@@ -128,9 +130,12 @@ def get_category(request):
 
 
 def book_detail_view(request, pk):
+    global favorite_books, reading_list
     book = get_object_or_404(Book, pk=pk)
     comments = Comment.objects.filter(book=book)
-
+    if request.user.is_authenticated:
+        favorite_books = Book.objects.filter(favorite__user=request.user)
+        reading_list = Book.objects.filter(readingstatus__user=request.user)
     book.total_views += 1
     book.save(update_fields=['total_views'])
     total_comments = comments.count()
@@ -148,6 +153,174 @@ def book_detail_view(request, pk):
         'book': book,
         'comments': comments,
         'average': f'{avg:.2f}' if avg != 0 else '0',
+        'favorite_books': favorite_books if request.user.is_authenticated else [],
+        'reading_list': reading_list if request.user.is_authenticated else [],
     }
 
     return render(request, 'homePage/card-detailed-view.html', context)
+
+
+def add_comment_view(request):
+    """Handles submission of a new comment."""
+    try:
+        data = json.loads(request.body)
+        book_id = data.get('book_id')
+        comment_text = data.get('comment_text', '').strip()
+        rating = data.get('rating')
+
+        if not all([book_id, comment_text, rating is not None]): # Check rating exists
+            return JsonResponse({'status': 'error', 'message': 'Missing data'}, status=400)
+
+        try:
+            rating = int(rating)
+            if not 1 <= rating <= 5:
+                raise ValueError("Rating must be between 1 and 5.")
+        except (ValueError, TypeError):
+             return JsonResponse({'status': 'error', 'message': 'Invalid rating value'}, status=400)
+
+        book = get_object_or_404(Book, pk=book_id)
+
+        Comment.objects.create(
+            book=book,
+            user=request.user,
+            text=comment_text,
+            rating=rating
+        )
+        # Optional: Update book's average rating here if needed
+
+        return JsonResponse({'status': 'success', 'message': 'Comment added successfully!'}, status=201)
+
+    except json.JSONDecodeError:
+         return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
+    except Book.DoesNotExist:
+         return JsonResponse({'status': 'error', 'message': 'Book not found'}, status=404)
+    except Exception as e:
+        print(f"Error in add_comment_view: {e}")
+        return JsonResponse({'status': 'error', 'message': 'An internal server error occurred'}, status=500)
+
+# --- Like View (Uses 'likes' M2M field) ---
+
+def like_book_view(request):
+    """Handles liking a book. Adds user to 'likes' M2M."""
+    try:
+        data = json.loads(request.body)
+        book_id = data.get('book_id')
+
+        if not book_id:
+            return JsonResponse({'status': 'error', 'message': 'Missing book_id'}, status=400)
+
+        book = get_object_or_404(Book, pk=book_id)
+        user = request.user
+
+        # Using the M2M field 'likes'
+        # add() handles duplicates gracefully
+        book.likes.add(user)
+
+        # Get the updated count from the M2M relationship
+        new_count = book.likes.count()
+
+        # Update the separate counter field if you still need it (redundant?)
+        book.likes_counter = new_count
+        book.save(update_fields=['likes_counter'])
+
+        return JsonResponse({'status': 'success', 'new_count': new_count})
+
+    except json.JSONDecodeError:
+         return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
+    except Book.DoesNotExist:
+         return JsonResponse({'status': 'error', 'message': 'Book not found'}, status=404)
+    except Exception as e:
+        print(f"Error in like_book_view: {e}")
+        return JsonResponse({'status': 'error', 'message': 'An internal server error occurred'}, status=500)
+
+
+# --- Favourite Toggle View (Using 'likes' M2M field for favorites) ---
+# IMPORTANT: This assumes 'likes' is used for *both* likes and favorites.
+# It's better practice to have a separate field like 'favorited_by'.
+# If you add `favorited_by = models.ManyToManyField(...)`, change the logic below.
+
+def toggle_favourite_view(request):
+    """Adds or removes a book from the user's favourites using the Favorite model."""
+    try:
+        data = json.loads(request.body)
+        book_id = data.get('book_id')
+
+        if not book_id:
+            return JsonResponse({'status': 'error', 'message': 'Missing book_id'}, status=400)
+
+        book = get_object_or_404(Book, pk=book_id)
+        user = request.user
+        is_favourite_after_toggle = False # State *after* the action
+
+        # Check if a Favorite object exists for this user and book
+        favorite_instance, created = Favorite.objects.get_or_create(
+            user=user,
+            book=book
+        )
+
+        if created:
+            # The object was just created, meaning it wasn't a favorite before.
+            # It is now favourited.
+            is_favourite_after_toggle = True
+            message = "Book added to favorites."
+        else:
+            # The object already existed (get_or_create returned existing instance).
+            # This means it *was* a favorite, so we delete it.
+            favorite_instance.delete()
+            is_favourite_after_toggle = False
+            message = "Book removed from favorites."
+
+        # Return the final state for the JS to update UI
+        return JsonResponse({
+            'status': 'success',
+            'message': message, # Optional message
+            'is_favourite': is_favourite_after_toggle
+        })
+
+    except json.JSONDecodeError:
+         return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
+    except Book.DoesNotExist:
+         return JsonResponse({'status': 'error', 'message': 'Book not found'}, status=404)
+    except Exception as e:
+        print(f"Error in toggle_favourite_view: {e}") # Replace with proper logging
+        return JsonResponse({'status': 'error', 'message': 'An internal server error occurred'}, status=500)
+
+
+def add_to_reading_list_view(request):
+    """Adds or updates a book's status in the user's reading list to 'to_read'."""
+    try:
+        data = json.loads(request.body)
+        book_id = data.get('book_id')
+
+        if not book_id:
+            return JsonResponse({'status': 'error', 'message': 'Missing book_id'}, status=400)
+
+        book = get_object_or_404(Book, pk=book_id)
+        user = request.user
+
+        # Use update_or_create to handle existing entries
+        # This will set the status to 'to_read' regardless of previous status
+        # when this specific action is triggered.
+        # It also prevents duplicate entries for the same user/book.
+        reading_status_obj, created = ReadingStatus.objects.update_or_create(
+            user=user,
+            book=book,
+            defaults={'status': 'to_read'}
+        )
+
+        message = "Book added to reading list (status: To Read)." if created else "Book status updated to 'To Read' in your list."
+
+        return JsonResponse({
+            'status': 'success',
+            'message': message,
+            # Optionally return the status if JS needs it
+            'reading_status': reading_status_obj.status
+        })
+
+    except json.JSONDecodeError:
+         return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
+    except Book.DoesNotExist:
+         return JsonResponse({'status': 'error', 'message': 'Book not found'}, status=404)
+    except Exception as e:
+        print(f"Error in add_to_reading_list_view: {e}") # Replace with proper logging
+        return JsonResponse({'status': 'error', 'message': 'An internal server error occurred'}, status=500)
