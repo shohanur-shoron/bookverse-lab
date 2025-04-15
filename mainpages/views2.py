@@ -257,3 +257,14 @@ def move_to_Currently_Reading_Books(request, id):
     reading_status.save()
 
     return redirect('want_to_read_books')
+
+
+def finish_reading_books(request):
+    books = get_finished_reading_books(request)
+
+    context = {
+        'books': books,
+        'title_text': 'Finished Reading Books',
+    }
+
+    return render(request, 'sidePanel/your-favourite.html', context)
